@@ -1,0 +1,230 @@
+<script type="text/javascript">
+  (function($) {
+    $(document).on("page:load page:change", function() {
+
+    window.dataLayer = window.dataLayer || [];
+
+    function captureAndStoreUTMParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const utmParams = {};
+      for (const [key, value] of urlParams.entries()) {
+        if (key.startsWith("utm_")) {
+          utmParams[key] = value;
+        }
+      }
+      if (Object.keys(utmParams).length > 0) {
+        sessionStorage.setItem("utmParams", JSON.stringify(utmParams));
+      }
+    }
+
+    function fetchUTMParams() {
+      const storedParams = sessionStorage.getItem("utmParams");
+      return storedParams ? JSON.parse(storedParams) : {};
+    }
+    // Capture and store UTM parameters on page load
+    window.addEventListener("load", captureAndStoreUTMParams);
+    const utmParams = fetchUTMParams();
+
+      if (Shopify.Checkout.step == "contact_information") {
+        // console.log("Contact Information Step");
+        dataLayer.push({
+          event: "bvo_begin_checkout",
+          ecommerce: {
+            checkout_type: "",
+            currency: "{{ shop.currency }}",
+            value: parseInt("{{ checkout.total_price | money_without_currency | replace: ',','' }}"),
+            items: [
+              {% for line_item in checkout.line_items %}
+              {
+                item_name: "{{ line_item.title }}",
+                item_id: "{{ line_item.product_id }}" ,
+                price: parseInt("{{ line_item.price | money_without_currency | replace: ',','' }}"),
+                item_brand: "{{ line_item.product.vendor }}",
+                item_category: "{{ line_item.product.type }}",
+                item_list_id: "{{ collection.id }}",
+                item_list_name: "{{ collection.title }}",
+                item_variant: "{{ line_item.variant.title }}",
+                quantity: parseInt("{{ line_item.quantity }}"),
+              },
+              {% endfor %}
+            ]
+          }
+        });
+        
+        dataLayer.push({
+        event: "bvo_add_customer_info",
+        ecommerce: {
+          currency: "{{ shop.currency }}",
+          value: parseInt("{{ checkout.total_price | money_without_currency | replace: ',','' }}"),
+          utm_id: utmParams.utm_id,
+          utm_source: utmParams.utm_source,
+          utm_campaign: utmParams.utm_campaign,
+          utm_medium: utmParams.utm_medium,
+          utm_term: utmParams.utm_term,
+          utm_content: utmParams.utm_content,
+          discounts: [
+            {% for discount in checkout.discount_applications %}
+            {
+              discount_title: "{{ discount.title }}",
+              discount_amount: parseInt("{{ discount.total_allocated_amount | money_without_currency | replace: ',','' }}"),
+              discount_type: "{{ discount.type }}",
+              discount_value_type: "{{ discount.value_type }}",
+            },
+            {% endfor %}
+          ],
+          items: [
+            {% for line_item in checkout.line_items %}
+            {
+              item_name: "{{ line_item.title }}",
+              item_id: "{{ line_item.product_id }}" ,
+              price: parseInt("{{ line_item.final_price | money_without_currency | replace: ',','' }}"),
+              item_brand: "{{ line_item.product.vendor }}",
+              item_category: "{{ line_item.product.type }}",
+              item_variant: "{{ line_item.variant.title }}",
+              quantity: parseInt("{{ line_item.quantity }}"),
+            },
+            {% endfor %}
+          ]
+        }
+      });
+      }
+
+      if (Shopify.Checkout.step == "shipping_method") {
+        // console.log("Shipping Method Step");
+        dataLayer.push({
+        event: "bvo_add_shipping_info",
+        ecommerce: {
+          currency: "{{ shop.currency }}",
+          value: parseInt("{{ checkout.total_price | money_without_currency | replace: ',','' }}"),
+          utm_id: utmParams.utm_id,
+          utm_source: utmParams.utm_source,
+          utm_campaign: utmParams.utm_campaign,
+          utm_medium: utmParams.utm_medium,
+          utm_term: utmParams.utm_term,
+          utm_content: utmParams.utm_content,
+          discounts: [
+            {% for discount in checkout.discount_applications %}
+            {
+              discount_title: "{{ discount.title }}",
+              discount_amount: parseInt("{{ discount.total_allocated_amount | money_without_currency | replace: ',','' }}"),
+              discount_type: "{{ discount.type }}",
+              discount_value_type: "{{ discount.value_type }}",
+            },
+            {% endfor %}
+          ],
+          items: [
+            {% for line_item in checkout.line_items %}
+            {
+              item_name: "{{ line_item.title }}",
+              item_id: "{{ line_item.product_id }}" ,
+              price: parseInt("{{ line_item.final_price | money_without_currency | replace: ',','' }}"),
+              item_brand: "{{ line_item.product.vendor }}",
+              item_category: "{{ line_item.product.type }}",
+              item_variant: "{{ line_item.variant.title }}",
+              quantity: parseInt("{{ line_item.quantity }}"),
+            },
+            {% endfor %}
+          ]
+        }
+      });
+      }
+
+      if (Shopify.Checkout.step == "payment_method") {
+        // console.log("Payment Method Step");
+        dataLayer.push({
+        event: "bvo_add_payment_info",
+        ecommerce: {
+          currency: "{{ shop.currency }}",
+          value: parseInt("{{ checkout.total_price | money_without_currency | replace: ',','' }}"),
+          utm_id: utmParams.utm_id,
+          utm_source: utmParams.utm_source,
+          utm_campaign: utmParams.utm_campaign,
+          utm_medium: utmParams.utm_medium,
+          utm_term: utmParams.utm_term,
+          utm_content: utmParams.utm_content,
+          shipping_method: "{{ checkout.shipping_method.title }}",
+          shipping_price: parseInt("{{ checkout.shipping_method.price | money_without_currency | replace: ',','' }}"),
+          discounts: [
+            {% for discount in checkout.discount_applications %}
+            {
+              discount_title: "{{ discount.title }}",
+              discount_amount: parseInt("{{ discount.total_allocated_amount | money_without_currency | replace: ',','' }}"),
+              discount_type: "{{ discount.type }}",
+              discount_value_type: "{{ discount.value_type }}",
+            },
+            {% endfor %}
+          ],
+          items: [
+            {% for line_item in checkout.line_items %}
+            {
+              item_name: "{{ line_item.title }}",
+              item_id: "{{ line_item.product_id }}" ,
+              price: parseInt("{{ line_item.final_price | money_without_currency | replace: ',','' }}"),
+              item_brand: "{{ line_item.product.vendor }}",
+              item_category: "{{ line_item.product.type }}",
+              item_variant: "{{ line_item.variant.title }}",
+              quantity: parseInt("{{ line_item.quantity }}"),
+            },
+            {% endfor %}
+          ]
+        }
+      });
+      }
+
+      if (Shopify.Checkout.step == "thank_you") {
+        // console.log("Thank you page");
+        {% capture checkout_type %}{% if order.source_name == '9537028097' %}Zecpe Checkout{% else %}Shopify Checkout{% endif %}{% endcapture %}
+        {% capture upsell %}{% for item in order.line_items %}{% if item.product.tags contains 'Upsell Mixed' %}Bought{% break %}{% else %}Not Bought{% break %}{% endif %}{% endfor %}{% endcapture %}
+        {% capture bellacash %}{% if order.discount_applications != blank %}{% for discount in order.discount_applications %}{% if discount.title contains 'FLITS_' %}Used{% break %}{% else %}Not Used{% break %}{% endif %}{% endfor %}{% else %}Not Used{% endif %}{% endcapture %}
+
+        dataLayer.push({
+        event: "bvo_purchase",
+          ecommerce: {
+            transaction_id: "{{ order.order_number }}",
+            affiliation: "Datalayer",
+            value: parseInt("{{ order.total_price | money_without_currency | replace: ",",'' }}"),
+            tax: parseInt("{{ order.tax_price  | money_without_currency | replace: ",",''}}"),
+            utm_id: utmParams.utm_id,
+            utm_source: utmParams.utm_source,
+            utm_campaign: utmParams.utm_campaign,
+            utm_medium: utmParams.utm_medium,
+            utm_term: utmParams.utm_term,
+            utm_content: utmParams.utm_content,
+            shipping_method: "{{ order.shipping_method.title }}",
+            shipping_price: parseInt("{{ order.shipping_method.price | money_without_currency | replace: ',','' }}"),
+            currency: "{{ order.currency }}",
+            checkout_type: "{{ checkout_type }}",
+            upsell: "{{ upsell }}",
+            bellacash: "{{ bellacash }}",
+            payment_method: "{{ order.gateway }}",
+            financial_status: "{{ order.financial_status }}",
+            fulfillment_status: "{{ order.fulfillment_status }}",
+            discounts: [
+              {% for discount in order.discount_applications %}
+              {
+                discount_title: "{{ discount.title }}",
+                discount_amount: parseInt("{{ discount.total_allocated_amount | money_without_currency | replace: ',','' }}"),
+                discount_type: "{{ discount.type }}",
+                discount_value_type: "{{ discount.value_type }}",
+              },
+              {% endfor %}
+            ],
+            items: [
+              {% for line_item in order.line_items %}
+              {
+                item_name: "{{ line_item.title }}",
+                item_id: "{{ line_item.product_id }}" ,
+                price: parseInt("{{ line_item.final_price | money_without_currency | replace: ',','' }}"),
+                item_brand: "{{ line_item.product.vendor }}",
+                item_category: "{{ line_item.product.type }}",
+                item_variant: "{{ line_item.variant.title }}",
+                quantity: parseInt("{{ line_item.quantity }}")
+              },
+              {% endfor %}
+            ]
+          }
+        });
+      }
+    });
+  })(Checkout.$);
+</script>
