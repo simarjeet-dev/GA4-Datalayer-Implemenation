@@ -1,4 +1,6 @@
-<script type="text/javascript">
+<script
+  type="text/javascript"
+>
    document.addEventListener("DOMContentLoaded", () => {
    window.dataLayer = window.dataLayer || [];
 
@@ -42,7 +44,10 @@
                {
                  item_name: "{{ product.title }}",
                  item_id: "{{ product.id }}" ,
-                 price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+                 price: parseInt("{{ product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+                 mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',','' }}"),
+                 saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+                 saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
                  item_brand: "{{ product.vendor }}",
                  item_category: "{{ product.type }}",
                  item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -89,6 +94,9 @@
                        item_id: String(productData.id),
                        page_url: productData.url,
                        price: parseInt(productData.price/100),
+                       mrp: parseInt(productData.compare_at_price/100),
+                       saving_amount: parseInt((productData.compare_at_price/100) - (productData.price/100)),
+                       saving_percent: parseInt(((productData.compare_at_price/100) - (productData.price/100)) * 100 / (productData.compare_at_price/100)),
                        item_brand: productData.vendor,
                        item_category: productData.type,
                        item_variant: productData.variants[0].title,
@@ -118,9 +126,31 @@
          items: [
            {
              item_name: "{{ product.title }}",
+             item_sku: "{{ product.selected_or_first_available_variant.sku }}",
              item_id: "{{ product.id }}",
              page_url: "{{ product.url }}",
-             price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+             price: parseInt("{{ product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+             mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',','' }}"),
+             saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+             saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
+             item_brand: "{{ product.vendor }}",
+             item_category: "{{ product.type }}",
+             item_variant: "{{ product.selected_or_first_available_variant.title }}",
+           },
+           ],
+        items_ct: [
+           {
+             item_name: "{{ product.title }}",
+             item_sku: "{{ product.selected_or_first_available_variant.sku }}",
+             item_available: "{{ product.selected_or_first_available_variant.available }}",
+             item_image_url: "{{ product | image_url: width: 450  }}",
+             item_id: "{{ product.id }}",
+             item_url: "https://bellavitaorganic.com{{ product.url }}",
+             price: parseInt("{{ product.selected_or_first_available_variant.price  | money_without_currency | replace: ',','' }}"),
+             mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',',''  }}"),
+             saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+             saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
+             stock: parseInt("{{ product.selected_or_first_available_variant.inventory_quantity }}"),
              item_brand: "{{ product.vendor }}",
              item_category: "{{ product.type }}",
              item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -134,6 +164,12 @@
      document.addEventListener('ajaxProduct:added', function(e) {
       // console.log(e.detail.product);
       const atcCurrentUrl = window.location.href;
+      const productHandle = e.detail.product.handle;
+      fetch(`/products/${productHandle}.js`)
+      .then(response => response.json())
+      .then(productData => {
+      // console.log("Selected Item:", productData);
+      dataLayer.push({ecommerce: {items: {}}});  // Clear the existing items array
       dataLayer.push({
         event: "bvo_add_to_cart",
         ecommerce: {
@@ -152,6 +188,9 @@
              item_id: String(e.detail.product.product_id),
              item_url: e.detail.product.url,
              price: parseInt(e.detail.product.price/100),
+             mrp: parseInt(productData.compare_at_price/100),
+             saving_amount: parseInt((productData.compare_at_price/100) - (e.detail.product.price/100)),
+             saving_percent: parseInt(((productData.compare_at_price/100) - (e.detail.product.price/100)) * 100 / (productData.compare_at_price/100)),
              item_brand: e.detail.product.vendor,
              item_category: e.detail.product.product_type,
              item_variant: e.detail.product.variant_options[0],
@@ -160,6 +199,7 @@
          ]
         }
       });
+      });          
      });
 
      /* Custom event for view default cart */
@@ -177,7 +217,10 @@
            {
              item_name: "{{ line_item.title }}",
              item_id: "{{ line_item.product_id }}" ,
-             price: parseInt("{{ line_item.final_price | money_without_currency | replace: ',','' }}"),
+             price: parseInt("{{ line_item.variant.price | money_without_currency | replace: ',','' }}"),
+             mrp: parseInt("{{ line_item.variant.compare_at_price  | money_without_currency | replace: ',','' }}"),
+             saving_amount: parseInt("{{ line_item.variant.compare_at_price | minus: line_item.variant.price | money_without_currency | replace: ',','' }}"),
+             saving_percent: parseInt("{{ line_item.variant.compare_at_price | minus: line_item.variant.price | times: 100.0 | divided_by: line_item.variant.compare_at_price }}"),
              item_brand: "{{ line_item.product.vendor }}",
              item_category: "{{ line_item.product.type }}",
              item_variant: "{{ line_item.variant.title }}",
@@ -190,6 +233,7 @@
      {% endif %}
 
      /* Custom event for view mini cart */
+     {% unless template contains 'cart' %}
      const cartDrawerContainer = document.querySelector("cart-drawer .cart-drawer-container");
      const headerIcon = cartDrawerContainer.querySelector(".header__icon #cart-icon-bubble");
      headerIcon.addEventListener("click", () => {
@@ -200,17 +244,26 @@
             // console.log("Cart:", cart);
             let dataItems = [];
             cart.items.forEach(item => {
-              let dataItem = {
-               item_name: item.title,
-               item_id: String(item.id),
-               price: parseInt(item.price/100),
-               final_price: parseInt(item.final_price/100),
-               item_brand: item.vendor,
-               item_category: item.product_type,
-               item_variant: item.variant_options[0],
-               quantity: item.quantity
-              };
+              const productHandle = item.handle;
+              fetch(`/products/${productHandle}.js`)
+              .then(response => response.json())
+              .then(productData => {
+                // console.log("Selected Item:", productData);
+                let dataItem = {
+                 item_name: item.title,
+                 item_id: String(item.id),
+                 price: parseInt(item.price/100),
+                 mrp: parseInt(productData.compare_at_price/100),
+                 saving_amount: parseInt((productData.compare_at_price/100) - (item.price/100)),
+                 saving_percent: parseInt(((productData.compare_at_price/100) - (item.price/100)) * 100 / (productData.compare_at_price/100)),
+                 final_price: parseInt(item.final_price/100),
+                 item_brand: item.vendor,
+                 item_category: item.product_type,
+                 item_variant: item.variant_options[0],
+                 quantity: item.quantity
+                };
                 dataItems.push(dataItem);
+              });  
             });
             // console.log(dataItems);
             dataLayer.push({
@@ -227,6 +280,7 @@
           });
         }
      });
+     {% endunless %}
      
      /* Custom event for remove item from cart */
      let targetNode = document.querySelector("#mini-cart");
@@ -260,7 +314,10 @@
                           {
                             item_name: productData.title,
                             item_id: String(productData.id),
-                            price: product_price,
+                            price: parseInt(productData.price/100),
+                            mrp: parseInt(productData.compare_at_price/100),
+                            saving_amount: parseInt((productData.compare_at_price/100) - (productData.price/100)),
+                            saving_percent: parseInt(((productData.compare_at_price/100) - (productData.price/100)) * 100 / (productData.compare_at_price/100)),
                             final_price: parseInt(product_final_price),
                             item_brand: productData.vendor,
                             item_category: productData.type,
@@ -315,7 +372,7 @@
   {% endif %}
 
   /* Custom event for click on PDP offer image */
-  {% if template contains 'product' %}
+  {% if template contains 'product' and product.type != 'Custom Box' %}
   let offerImgWrapper = document.querySelector(".pdp-offer-img-wrapper");
   let imgLink = offerImgWrapper.firstChild.href;
   let imgElement = offerImgWrapper.querySelector(".media img");
@@ -346,7 +403,10 @@
            {
               item_name: "{{ product.title }}",
               item_id: "{{ product.id }}",
-              price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+              price: parseInt("{{ product.selected_or_first_available_variant.price  | money_without_currency | replace: ',','' }}"),
+              mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',',''  }}"),
+              saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+              saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
               item_brand: "{{ product.vendor }}",
               item_category: "{{ product.type }}",
               item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -359,7 +419,7 @@
   {% endif %}
 
   /* Custom event for click on PDP offer section */
-  {% if template contains 'product' %}
+  {% if template contains 'product' and product.type != 'Custom Box' %}
   const offerSectionCurrentUrl = window.location.href;
   const offerSectionContainer = document.querySelector(".offers-section-container");
   const offerItem = offerSectionContainer.querySelectorAll("ul.slider li.offer-wrapper");
@@ -391,7 +451,10 @@
             {
               item_name: "{{ product.title }}",
               item_id: "{{ product.id }}",
-              price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+              price: parseInt("{{ product.selected_or_first_available_variant.price  | money_without_currency | replace: ',','' }}"),
+              mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',',''  }}"),
+              saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+              saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
               item_brand: "{{ product.vendor }}",
               item_category: "{{ product.type }}",
               item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -405,7 +468,7 @@
   {% endif %}
 
   /* Custom event for click on read more and read less button */
-  {% if template contains 'product' %}
+  {% if template contains 'product' and product.type != 'Custom Box' %}
   let productDescriptionContainer = document.querySelector(".product__description");
   let readMore = productDescriptionContainer.querySelector("a.read-more");
 
@@ -427,7 +490,10 @@
             {
               item_name: "{{ product.title }}",
               item_id: "{{ product.id }}",
-              price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+              price: parseInt("{{ product.selected_or_first_available_variant.price  | money_without_currency | replace: ',','' }}"),
+              mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',',''  }}"),
+              saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+              saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
               item_brand: "{{ product.vendor }}",
               item_category: "{{ product.type }}",
               item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -452,7 +518,10 @@
             {
               item_name: "{{ product.title }}",
               item_id: "{{ product.id }}",
-              price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+              price: parseInt("{{ product.selected_or_first_available_variant.price  | money_without_currency | replace: ',','' }}"),
+              mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',',''  }}"),
+              saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+              saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
               item_brand: "{{ product.vendor }}",
               item_category: "{{ product.type }}",
               item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -466,7 +535,7 @@
   {% endif %}
 
   /* Custom event for click on write review */
-  {% if template contains 'product' %}
+  {% if template contains 'product' and product.type != 'Custom Box' %}
   let writeReviewLink = document.querySelector("#judgeme_product_reviews a.jdgm-write-rev-link");
 
   writeReviewLink?.addEventListener("click", () => {
@@ -485,7 +554,10 @@
             {
               item_name: "{{ product.title }}",
               item_id: "{{ product.id }}",
-              price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+              price: parseInt("{{ product.selected_or_first_available_variant.price  | money_without_currency | replace: ',','' }}"),
+              mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',',''  }}"),
+              saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+              saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
               item_brand: "{{ product.vendor }}",
               item_category: "{{ product.type }}",
               item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -498,7 +570,7 @@
   {% endif %}
 
   /* Custom event for PDP image scroll */
-  {% if template contains 'product' %}
+  {% if template contains 'product' and product.type != 'Custom Box' %}
   const slider = document.querySelector("thumbnail-slider ul.thumbnail-list");
   let slidesViewed = 1;
   const observerThumbnailSlider = new MutationObserver(mutations => {
@@ -536,7 +608,10 @@
             {
               item_name: "{{ product.title }}",
               item_id: "{{ product.id }}",
-              price: parseInt("{{ product.price | money_without_currency | replace: ',','' }}"),
+              price: parseInt("{{ product.selected_or_first_available_variant.price  | money_without_currency | replace: ',','' }}"),
+              mrp: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | money_without_currency | replace: ',',''  }}"),
+              saving_amount: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | money_without_currency | replace: ',','' }}"),
+              saving_percent: parseInt("{{ product.selected_or_first_available_variant.compare_at_price | minus: product.selected_or_first_available_variant.price | times: 100.0 | divided_by: product.selected_or_first_available_variant.compare_at_price }}"),
               item_brand: "{{ product.vendor }}",
               item_category: "{{ product.type }}",
               item_variant: "{{ product.selected_or_first_available_variant.title }}",
@@ -577,7 +652,6 @@
    });
   });
   {% endif %}
-
   });
 </script>
 
